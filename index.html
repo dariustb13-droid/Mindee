@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <title>Mindee - Asistență Zilnică</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           CSS VARIABLES & RESET
+           ============================================ */
+        :root {
+            --teal-deep: #0d7377;
+            --teal-mid: #14919b;
+            --teal-light: #45b5aa;
+            --teal-pale: #b8e6e0;
+            --teal-ghost: #e8f6f4;
+            --sand: #d4a76a;
+            --sand-light: #e8c99b;
+            --green-pill: #4a8c5c;
+            --bg-main: #f7f9fa;
+            --bg-card: #ffffff;
+            --text-primary: #1a2a2a;
+            --text-secondary: #5a7070;
+            --text-muted: #8fa5a5;
+            --border: #d4e4e2;
+            --shadow-sm: 0 2px 8px rgba(13,115,119,0.06);
+            --shadow-md: 0 4px 20px rgba(13,115,119,0.1);
+            --shadow-lg: 0 8px 40px rgba(13,115,119,0.14);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 22px;
+            --radius-xl: 32px;
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ============================================
+           BACKGROUND DECORATION
+           ============================================ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(20,145,155,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(212,167,106,0.06) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border-bottom: 1px solid rgba(212,228,226,0.5);
+            padding: 0 2rem;
+        }
+        .navbar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 68px;
+        }
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--teal-deep);
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+        }
+        .navbar-brand img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .nav-links {
+            display: flex;
+            gap: 4px;
+        }
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: var(--radius-md);
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.92rem;
+            transition: var(--transition);
+            cursor: pointer;
+            border: none;
+            background: none;
+        }
+        .nav-link:hover {
+            background: var(--teal-ghost);
+            color: var(--teal-deep);
+        }
+        .nav-link.active {
+            background: var(--teal-deep);
+            color: #fff;
+            box-shadow: 0 2px 12px rgba(13,115,119,0.25);
+        }
+        .nav-link svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        /* Mobile hamburger */
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+        .hamburger svg { width: 26px; height: 26px; color: var(--teal-deep); }
+
+        @media (max-width: 640px) {
+            .hamburger { display: block; }
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 68px;
+                left: 0;
+                right: 0;
+                background: rgba(255,255,255,0.97);
+                backdrop-filter: blur(18px);
+                flex-direction: column;
+                padding: 12px 16px;
+                border-bottom: 1px solid var(--border);
+                box-shadow: var(--shadow-md);
+            }
+            .nav-links.open { display: flex; }
+        }
+
+        /* ============================================
+           PAGES CONTAINER
+           ============================================ */
+        .page {
+            display: none;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 0.4s ease;
+        }
+        .page.active { display: flex; flex-direction: column; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           PAGE: ACASA
+           ============================================ */
+        .home-page {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            gap: 2rem;
+            min-height: calc(100vh - 68px);
+        }
+        .home-logo-container {
+            position: relative;
+        }
+        .home-logo-container::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--teal-ghost) 0%, transparent 70%);
+            animation: logoPulse 4s ease-in-out infinite;
+        }
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.08); opacity: 1; }
+        }
+        .home-logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
+            box-shadow: var(--shadow-lg);
+            border: 4px solid rgba(255,255,255,0.8);
+        }
+        .home-tagline {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            color: var(--teal-deep);
+            text-align: center;
+            font-weight: 600;
+        }
+        .home-subtitle {
+            color: var(--text-muted);
+            font-size: 1rem;
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* Bucharest Clock */
+        .clock-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            display: flex;
+            justify-content: center;
+            padding: 16px;
+            pointer-events: none;
+        }
+        .clock-widget {
+            pointer-events: auto;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(212,228,226,0.6);
+            border-radius: var(--radius-lg);
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: var(--shadow-md);
+        }
+        .clock-face {
+            position: relative;
+            width: 52px;
+            height: 52px;
+        }
+        .clock-face svg { width: 52px; height: 52px; }
+        .clock-digital {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .clock-time {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--teal-deep);
+            letter-spacing: -0.5px;
+            font-variant-numeric: tabular-nums;
+        }
+        .clock-time .seconds {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--teal-mid);
+        }
+        .clock-date {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .clock-label {
+            font-size: 0.65rem;
+            color: var(--sand);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* ============================================
+           PAGE: CONFIGURARE TRATAMENT
+           ============================================ */
+        .config-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 120px;
+            width: 100%;
+        }
+        .config-page h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--teal-deep);
+            margin-bottom: 0.5rem;
+        }
+        .config-page .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.92rem;
+        }
+
+        /* Status bar */
+        .sheet-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .sheet-status.loading { background: #fef9e7; color: #92730c; }
+        .sheet-status.connected { background: #e8f6f4; color: var(--teal-deep); }
+        .sheet-status.error { background: #fde8e8; color: #c0392b; }
+        .sheet-status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+        }
+        .sheet-status.loading .sheet-status-dot { background: #f1c40f; animation: blink 1s infinite; }
+        .sheet-status.connected .sheet-status-dot { background: #27ae60; }
+        .sheet-status.error .sheet-status-dot { background: #e74c3c; }
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--teal-deep);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card-title svg { width: 20px; height: 20px; }
+
+        /* Medication table from Google Sheets */
+        .med-table-wrap {
+            overflow-x: auto;
+            margin-bottom: 1rem;
+        }
+        .med-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.88rem;
+        }
+        .med-table thead th {
+            background: var(--teal-ghost);
+            color: var(--teal-deep);
+            font-weight: 600;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid var(--teal-pale);
+            white-space: nowrap;
+        }
+        .med-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+        .med-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+        .med-table tbody tr { cursor: pointer; transition: var(--transition); }
+        .med-table tbody tr:hover { background: var(--teal-ghost); }
+        .med-table tbody tr.selected { background: rgba(20,145,155,0.1); }
+        .med-table tbody td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+        .med-table tbody td:first-child { font-weight: 600; color: var(--teal-mid); }
+        .med-check {
+            width: 18px; height: 18px;
+            border-radius: 4px;
+            border: 2px solid var(--border);
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+        .med-check:checked {
+            background: var(--teal-deep);
+            border-color: var(--teal-deep);
+        }
+        .med-check:checked::after {
+            content: '✓';
+            color: #fff;
+            font-size: 12px;
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+        }
+
+        /* Add new medication form */
+        .add-med-form {
+            display: grid;
+            grid-template-columns: 80px 1fr 1fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+        @media (max-width: 640px) {
+            .add-med-form {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-input, .form-select {
+            padding: 9px 12px;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            background: #fff;
+            transition: var(--transition);
+            outline: none;
+        }
+        .form-input:focus, .form-select:focus {
+            border-color: var(--teal-mid);
+            box-shadow: 0 0 0 3px rgba(20,145,155,0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 0.88rem;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn svg { width: 18px; height: 18px; }
+        .btn-primary {
+            background: var(--teal-deep);
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(13,115,119,0.2);
+        }
+        .btn-primary:hover {
+            background: var(--teal-mid);
+            box-shadow: 0 4px 16px rgba(13,115,119,0.3);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: var(--teal-ghost);
+            color: var(--teal-deep);
+        }
+        .btn-secondary:hover { background: var(--teal-pale); }
+        .btn-danger {
+            background: #fde8e8;
+            color: #c0392b;
+        }
+        .btn-danger:hover { background: #f8c9c9; }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        /* Selected medications pills */
+        .selected-meds {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 1rem;
+        }
+        .med-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--teal-ghost);
+            border: 1px solid var(--teal-pale);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 0.82rem;
+            color: var(--teal-deep);
+            font-weight: 500;
+            animation: pillIn 0.3s ease;
+        }
+        @keyframes pillIn {
+            from { opacity:0; transform: scale(0.8); }
+            to { opacity:1; transform: scale(1); }
+        }
+        .med-pill-remove {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: none;
+            background: var(--teal-pale);
+            color: var(--teal-deep);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            line-height: 1;
+            transition: var(--transition);
+        }
+        .med-pill-remove:hover { background: var(--teal-mid); color: #fff; }
+
+        /* ============================================
+           PAGE: ISTORIC
+           ============================================ */
+        .history-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 120px;
+            width: 100%;
+        }
+        .history-page h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--teal-deep);
+            margin-bottom: 0.5rem;
+        }
+        .history-page .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.92rem;
+        }
+        .history-empty {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        .history-empty svg {
+            width: 64px; height: 64px;
+            color: var(--teal-pale);
+            margin-bottom: 1rem;
+        }
+        .history-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.88rem;
+        }
+        .history-table thead th {
+            background: var(--teal-ghost);
+            color: var(--teal-deep);
+            font-weight: 600;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid var(--teal-pale);
+            white-space: nowrap;
+        }
+        .history-table thead th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+        .history-table thead th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+        .history-table tbody td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-table tbody tr:hover { background: var(--teal-ghost); }
+        .moment-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .moment-badge.dimineata { background: #fef3c7; color: #92400e; }
+        .moment-badge.pranz { background: #dbeafe; color: #1e40af; }
+        .moment-badge.seara { background: #ede9fe; color: #5b21b6; }
+
+        /* ============================================
+           TOAST NOTIFICATIONS
+           ============================================ */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            background: #fff;
+            border-radius: var(--radius-sm);
+            padding: 12px 18px;
+            box-shadow: var(--shadow-lg);
+            border-left: 4px solid var(--teal-deep);
+            font-size: 0.88rem;
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s;
+            max-width: 340px;
+        }
+        .toast.success { border-left-color: #27ae60; }
+        .toast.error { border-left-color: #e74c3c; }
+        @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+        @keyframes toastOut { from { opacity:1; } to { opacity:0; } }
+
+        /* ============================================
+           CONFIG MODAL
+           ============================================ */
+        .config-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            z-index: 300;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .config-overlay.open { display: flex; }
+        .config-modal {
+            background: #fff;
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+        .config-modal h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--teal-deep);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        .config-modal .form-group { margin-bottom: 1rem; }
+        .config-modal .btn-group { justify-content: flex-end; }
+
+        /* ============================================
+           SETTINGS PANEL (top-right)
+           ============================================ */
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            transition: var(--transition);
+        }
+        .settings-btn:hover { color: var(--teal-deep); background: var(--teal-ghost); }
+        .settings-btn svg { width: 20px; height: 20px; }
+
+        /* Loading spinner */
+        .spinner {
+            width: 24px; height: 24px;
+            border: 3px solid var(--teal-pale);
+            border-top-color: var(--teal-deep);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 2rem auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Footer spacer for clock */
+        .footer-spacer { height: 90px; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         NAVIGATION
+         ============================================ -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="#" class="navbar-brand" onclick="navigateTo('home');return false;">
+                <img src="logo.jpeg" alt="Mindee Logo">
+                <span>Mindee</span>
+            </a>
+            <button class="hamburger" onclick="toggleMobileMenu()" aria-label="Meniu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+            </button>
+            <div class="nav-links" id="navLinks">
+                <button class="nav-link active" data-page="home" onclick="navigateTo('home')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    Acasă
+                </button>
+                <button class="nav-link" data-page="config" onclick="navigateTo('config')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                    Configurare tratament
+                </button>
+                <button class="nav-link" data-page="history" onclick="navigateTo('history')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Istoric
+                </button>
+            </div>
+            <button class="settings-btn" onclick="openSettings()" title="Setări Google Sheet">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ============================================
+         PAGE: ACASA
+         ============================================ -->
+    <div class="page active" id="page-home">
+        <div class="home-page">
+            <div class="home-logo-container">
+                <img src="logo.jpeg" alt="Mindee Logo" class="home-logo">
+            </div>
+            <h1 class="home-tagline">Mindee</h1>
+            <p class="home-subtitle">Asistență zilnică pentru gestionarea tratamentului. Configurați, monitorizați și urmăriți medicația cu ușurință.</p>
+        </div>
+    </div>
+
+    <!-- ============================================
+         PAGE: CONFIGURARE TRATAMENT
+         ============================================ -->
+    <div class="page" id="page-config">
+        <div class="config-page">
+            <h1>Configurare tratament</h1>
+            <p class="subtitle">Selectați medicamentele din lista Google Sheets sau adăugați medicamente noi.</p>
+
+            <!-- Google Sheet connection status -->
+            <div class="sheet-status loading" id="sheetStatus">
+                <span class="sheet-status-dot"></span>
+                <span id="sheetStatusText">Se conectează la Google Sheets...</span>
+            </div>
+
+            <!-- Available medications from Google Sheets -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                    Medicamente disponibile
+                    <button class="btn btn-secondary" style="margin-left:auto;padding:6px 12px;font-size:0.8rem;" onclick="loadMedications()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Reîncarcă
+                    </button>
+                </div>
+                <div id="medTableContainer">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+
+            <!-- Selected medications -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    Medicamente selectate
+                </div>
+                <div class="selected-meds" id="selectedMeds">
+                    <span style="color:var(--text-muted);font-size:0.88rem;">Niciun medicament selectat încă.</span>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="savePrescription()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                        Salvează prescripția
+                    </button>
+                    <button class="btn btn-danger" onclick="clearSelection()">
+                        Resetează selecția
+                    </button>
+                </div>
+            </div>
+
+            <!-- Add new medication -->
+            <div class="card">
+                <div class="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Adaugă medicament nou în listă
+                </div>
+                <div class="add-med-form" id="addMedForm">
+                    <div class="form-group">
+                        <label>Nr. Recipient</label>
+                        <input type="number" class="form-input" id="newNr" placeholder="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Denumire Medicament</label>
+                        <input type="text" class="form-input" id="newName" placeholder="ex: Bisoprolol 5mg">
+                    </div>
+                    <div class="form-group">
+                        <label>Momentul Zilei</label>
+                        <select class="form-select" id="newMoment">
+                            <option value="">Selectează...</option>
+                            <option value="Dimineața">Dimineața</option>
+                            <option value="Prânz">Prânz</option>
+                            <option value="Seara">Seara</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Mod de administrare</label>
+                        <input type="text" class="form-input" id="newAdmin" placeholder="ex: Oral, după masă">
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="addNewMedication()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Adaugă în Google Sheet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         PAGE: ISTORIC
+         ============================================ -->
+    <div class="page" id="page-history">
+        <div class="history-page">
+            <h1>Istoric prescripții</h1>
+            <p class="subtitle">Toate prescripțiile salvate, ordonate cronologic.</p>
+            <div class="card" id="historyContainer">
+                <div class="history-empty" id="historyEmpty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <p>Nu există prescripții în istoric.</p>
+                    <p style="font-size:0.82rem;margin-top:4px;">Mergeți la <strong>Configurare tratament</strong> pentru a salva prima prescripție.</p>
+                </div>
+                <div class="med-table-wrap" id="historyTableWrap" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         BUCHAREST CLOCK (fixed bottom)
+         ============================================ -->
+    <div class="clock-container" id="clockContainer">
+        <div class="clock-widget">
+            <div class="clock-face">
+                <svg viewBox="0 0 100 100" id="clockSvg">
+                    <circle cx="50" cy="50" r="48" fill="none" stroke="var(--teal-pale)" stroke-width="2"/>
+                    <!-- Hour markers -->
+                    <line x1="50" y1="6" x2="50" y2="12" stroke="var(--teal-deep)" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="50" y1="88" x2="50" y2="94" stroke="var(--teal-deep)" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="6" y1="50" x2="12" y2="50" stroke="var(--teal-deep)" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="88" y1="50" x2="94" y2="50" stroke="var(--teal-deep)" stroke-width="2" stroke-linecap="round"/>
+                    <!-- Small markers -->
+                    <line x1="73" y1="8.4" x2="71" y2="13.1" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="91.6" y1="27" x2="86.9" y2="29" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="91.6" y1="73" x2="86.9" y2="71" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="73" y1="91.6" x2="71" y2="86.9" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="27" y1="91.6" x2="29" y2="86.9" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="8.4" y1="73" x2="13.1" y2="71" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="8.4" y1="27" x2="13.1" y2="29" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <line x1="27" y1="8.4" x2="29" y2="13.1" stroke="var(--border)" stroke-width="1.2" stroke-linecap="round"/>
+                    <!-- Hands -->
+                    <line id="hourHand" x1="50" y1="50" x2="50" y2="26" stroke="var(--teal-deep)" stroke-width="3.5" stroke-linecap="round"/>
+                    <line id="minuteHand" x1="50" y1="50" x2="50" y2="16" stroke="var(--teal-mid)" stroke-width="2.5" stroke-linecap="round"/>
+                    <line id="secondHand" x1="50" y1="50" x2="50" y2="14" stroke="var(--sand)" stroke-width="1" stroke-linecap="round"/>
+                    <circle cx="50" cy="50" r="3" fill="var(--teal-deep)"/>
+                </svg>
+            </div>
+            <div class="clock-digital">
+                <div class="clock-label">București, România</div>
+                <div class="clock-time">
+                    <span id="clockHM">--:--</span><span class="seconds" id="clockSec">:--</span>
+                </div>
+                <div class="clock-date" id="clockDate">-- --- ----</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================
+         SETTINGS MODAL
+         ============================================ -->
+    <div class="config-overlay" id="settingsOverlay">
+        <div class="config-modal">
+            <h2>⚙️ Setări Google Sheets</h2>
+            <div class="form-group">
+                <label>Google Sheet ID</label>
+                <input type="text" class="form-input" id="settingSheetId" placeholder="ex: 1AbC_dEf... (din URL-ul sheet-ului)">
+            </div>
+            <div class="form-group">
+                <label>API Key</label>
+                <input type="text" class="form-input" id="settingApiKey" placeholder="AIza...">
+            </div>
+            <div class="form-group">
+                <label>Numele tab-ului (sheet)</label>
+                <input type="text" class="form-input" id="settingSheetName" value="Medicamente" placeholder="Medicamente">
+            </div>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;line-height:1.5;">
+                📌 Sheet-ul trebuie să fie <strong>partajat public</strong> (vizibil cu linkul) și trebuie să aveți un API Key Google valid cu Sheets API activat.
+            </p>
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="closeSettings()">Anulează</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Salvează și conectează</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- ============================================
+         JAVASCRIPT
+         ============================================ -->
+    <script>
+        // ==================================
+        // STATE
+        // ==================================
+        let medications = [];
+        let selectedMeds = [];
+        let history = [];
+        let config = {
+            sheetId: localStorage.getItem('mindee_sheetId') || '',
+            apiKey: localStorage.getItem('mindee_apiKey') || '',
+            sheetName: localStorage.getItem('mindee_sheetName') || 'Medicamente'
+        };
+
+        // ==================================
+        // NAVIGATION
+        // ==================================
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelector(`.nav-link[data-page="${page}"]`).classList.add('active');
+            document.getElementById('navLinks').classList.remove('open');
+
+            if (page === 'config') loadMedications();
+            if (page === 'history') renderHistory();
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('navLinks').classList.toggle('open');
+        }
+
+        // ==================================
+        // TOAST NOTIFICATIONS
+        // ==================================
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // ==================================
+        // SETTINGS
+        // ==================================
+        function openSettings() {
+            document.getElementById('settingSheetId').value = config.sheetId;
+            document.getElementById('settingApiKey').value = config.apiKey;
+            document.getElementById('settingSheetName').value = config.sheetName;
+            document.getElementById('settingsOverlay').classList.add('open');
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsOverlay').classList.remove('open');
+        }
+
+        function saveSettings() {
+            config.sheetId = document.getElementById('settingSheetId').value.trim();
+            config.apiKey = document.getElementById('settingApiKey').value.trim();
+            config.sheetName = document.getElementById('settingSheetName').value.trim() || 'Medicamente';
+            localStorage.setItem('mindee_sheetId', config.sheetId);
+            localStorage.setItem('mindee_apiKey', config.apiKey);
+            localStorage.setItem('mindee_sheetName', config.sheetName);
+            closeSettings();
+            showToast('Setări salvate! Se reconectează...');
+            loadMedications();
+        }
+
+        // ==================================
+        // GOOGLE SHEETS INTEGRATION
+        // ==================================
+        function getSheetsUrl(range) {
+            return `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(range)}?key=${config.apiKey}`;
+        }
+
+        async function loadMedications() {
+            const statusEl = document.getElementById('sheetStatus');
+            const statusText = document.getElementById('sheetStatusText');
+            const container = document.getElementById('medTableContainer');
+
+            if (!config.sheetId || !config.apiKey) {
+                statusEl.className = 'sheet-status error';
+                statusText.textContent = 'Configurați Sheet ID și API Key din ⚙️ Setări.';
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:2rem;">Apăsați ⚙️ din colțul din dreapta-sus pentru a configura conexiunea Google Sheets.</p>';
+                return;
+            }
+
+            statusEl.className = 'sheet-status loading';
+            statusText.textContent = 'Se conectează la Google Sheets...';
+            container.innerHTML = '<div class="spinner"></div>';
+
+            try {
+                const range = `${config.sheetName}!A1:D1000`;
+                const res = await fetch(getSheetsUrl(range));
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const rows = data.values || [];
+
+                if (rows.length < 2) {
+                    statusEl.className = 'sheet-status connected';
+                    statusText.textContent = 'Conectat — sheet-ul este gol.';
+                    container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:1rem;">Sheet-ul nu conține medicamente. Adăugați primul medicament mai jos.</p>';
+                    medications = [];
+                    return;
+                }
+
+                // Skip header row
+                medications = rows.slice(1).map((row, i) => ({
+                    id: i,
+                    nrRecipient: row[0] || '',
+                    denumire: row[1] || '',
+                    momentZilei: row[2] || '',
+                    modAdmin: row[3] || ''
+                })).filter(m => m.denumire);
+
+                statusEl.className = 'sheet-status connected';
+                statusText.textContent = `Conectat — ${medications.length} medicamente încărcate.`;
+                renderMedTable();
+            } catch (err) {
+                console.error(err);
+                statusEl.className = 'sheet-status error';
+                statusText.textContent = `Eroare la conectare: ${err.message}`;
+                container.innerHTML = '<p style="text-align:center;color:#c0392b;padding:1rem;">Nu s-a putut conecta la Google Sheets. Verificați setările.</p>';
+            }
+        }
+
+        function renderMedTable() {
+            const container = document.getElementById('medTableContainer');
+            if (!medications.length) {
+                container.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:1rem;">Niciun medicament în sheet.</p>';
+                return;
+            }
+
+            let html = '<div class="med-table-wrap"><table class="med-table"><thead><tr>';
+            html += '<th style="width:40px;"></th><th>Nr. Recipient</th><th>Denumire Medicament</th><th>Momentul Zilei</th><th>Mod de administrare</th>';
+            html += '</tr></thead><tbody>';
+
+            medications.forEach(med => {
+                const isSelected = selectedMeds.some(s => s.id === med.id);
+                html += `<tr class="${isSelected ? 'selected' : ''}" onclick="toggleMed(${med.id})">`;
+                html += `<td><input type="checkbox" class="med-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleMed(${med.id})"></td>`;
+                html += `<td>${escHtml(med.nrRecipient)}</td>`;
+                html += `<td>${escHtml(med.denumire)}</td>`;
+                html += `<td>${escHtml(med.momentZilei)}</td>`;
+                html += `<td>${escHtml(med.modAdmin)}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function toggleMed(id) {
+            const med = medications.find(m => m.id === id);
+            if (!med) return;
+            const idx = selectedMeds.findIndex(s => s.id === id);
+            if (idx >= 0) {
+                selectedMeds.splice(idx, 1);
+            } else {
+                selectedMeds.push({ ...med });
+            }
+            renderMedTable();
+            renderSelectedPills();
+        }
+
+        function renderSelectedPills() {
+            const container = document.getElementById('selectedMeds');
+            if (!selectedMeds.length) {
+                container.innerHTML = '<span style="color:var(--text-muted);font-size:0.88rem;">Niciun medicament selectat încă.</span>';
+                return;
+            }
+            container.innerHTML = selectedMeds.map(m =>
+                `<div class="med-pill">
+                    <span>${escHtml(m.denumire)} — ${escHtml(m.momentZilei)}</span>
+                    <button class="med-pill-remove" onclick="toggleMed(${m.id})">×</button>
+                </div>`
+            ).join('');
+        }
+
+        function clearSelection() {
+            selectedMeds = [];
+            renderMedTable();
+            renderSelectedPills();
+            showToast('Selecția a fost resetată.', 'success');
+        }
+
+        // ==================================
+        // ADD NEW MEDICATION TO GOOGLE SHEET
+        // ==================================
+        async function addNewMedication() {
+            const nr = document.getElementById('newNr').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const moment = document.getElementById('newMoment').value;
+            const admin = document.getElementById('newAdmin').value.trim();
+
+            if (!name) {
+                showToast('Introduceți denumirea medicamentului!', 'error');
+                return;
+            }
+            if (!config.sheetId || !config.apiKey) {
+                showToast('Configurați mai întâi conexiunea Google Sheets din ⚙️', 'error');
+                return;
+            }
+
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(config.sheetName)}!A:D:append?valueInputOption=USER_ENTERED&key=${config.apiKey}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        values: [[nr, name, moment, admin]]
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error?.message || `HTTP ${res.status}`);
+                }
+
+                showToast(`"${name}" a fost adăugat în Google Sheet!`);
+                document.getElementById('newNr').value = '';
+                document.getElementById('newName').value = '';
+                document.getElementById('newMoment').value = '';
+                document.getElementById('newAdmin').value = '';
+                loadMedications();
+            } catch (err) {
+                console.error(err);
+                showToast(`Eroare la adăugare: ${err.message}. Notă: API Key-ul trebuie să aibă permisiuni de scriere, sau folosiți un Service Account.`, 'error');
+            }
+        }
+
+        // ==================================
+        // SAVE PRESCRIPTION (History)
+        // ==================================
+        function savePrescription() {
+            if (!selectedMeds.length) {
+                showToast('Selectați cel puțin un medicament!', 'error');
+                return;
+            }
+
+            const now = getBucharestTime();
+            const timestamp = formatDateTime(now);
+
+            selectedMeds.forEach(med => {
+                history.push({
+                    timestamp,
+                    dateObj: now.getTime(),
+                    nrRecipient: med.nrRecipient,
+                    denumire: med.denumire,
+                    momentZilei: med.momentZilei,
+                    modAdmin: med.modAdmin
+                });
+            });
+
+            // Save to localStorage
+            localStorage.setItem('mindee_history', JSON.stringify(history));
+
+            showToast(`Prescripție salvată: ${selectedMeds.length} medicament(e).`);
+            selectedMeds = [];
+            renderMedTable();
+            renderSelectedPills();
+        }
+
+        // ==================================
+        // HISTORY
+        // ==================================
+        function loadHistory() {
+            const stored = localStorage.getItem('mindee_history');
+            if (stored) {
+                try { history = JSON.parse(stored); } catch (e) { history = []; }
+            }
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyTableWrap');
+            const empty = document.getElementById('historyEmpty');
+
+            if (!history.length) {
+                container.style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.style.display = 'block';
+
+            // Sort newest first
+            const sorted = [...history].sort((a, b) => b.dateObj - a.dateObj);
+
+            let html = '<table class="history-table"><thead><tr>';
+            html += '<th>Data & Ora</th><th>Nr. Recipient</th><th>Denumire Medicament</th><th>Momentul Zilei</th><th>Mod de administrare</th>';
+            html += '</tr></thead><tbody>';
+
+            sorted.forEach(entry => {
+                const momentClass = (entry.momentZilei || '').toLowerCase().includes('diminea') ? 'dimineata'
+                    : (entry.momentZilei || '').toLowerCase().includes('pr') ? 'pranz' : 'seara';
+                html += '<tr>';
+                html += `<td style="white-space:nowrap;font-weight:500;">${escHtml(entry.timestamp)}</td>`;
+                html += `<td>${escHtml(entry.nrRecipient)}</td>`;
+                html += `<td><strong>${escHtml(entry.denumire)}</strong></td>`;
+                html += `<td><span class="moment-badge ${momentClass}">${escHtml(entry.momentZilei)}</span></td>`;
+                html += `<td>${escHtml(entry.modAdmin)}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ==================================
+        // BUCHAREST CLOCK
+        // ==================================
+        function getBucharestTime() {
+            const now = new Date();
+            // Convert to Bucharest time using Intl
+            const bucharestStr = now.toLocaleString('en-US', { timeZone: 'Europe/Bucharest' });
+            return new Date(bucharestStr);
+        }
+
+        function formatDateTime(d) {
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}.${pad(d.getMonth()+1)}.${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
+
+        function updateClock() {
+            const now = getBucharestTime();
+            const h = now.getHours();
+            const m = now.getMinutes();
+            const s = now.getSeconds();
+            const ms = now.getMilliseconds();
+
+            // Digital
+            const pad = n => String(n).padStart(2, '0');
+            document.getElementById('clockHM').textContent = `${pad(h)}:${pad(m)}`;
+            document.getElementById('clockSec').textContent = `:${pad(s)}`;
+
+            const months = ['Ian','Feb','Mar','Apr','Mai','Iun','Iul','Aug','Sep','Oct','Nov','Dec'];
+            const days = ['Duminică','Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă'];
+            document.getElementById('clockDate').textContent = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+            // Analog hands
+            const sDeg = (s + ms / 1000) * 6;
+            const mDeg = (m + s / 60) * 6;
+            const hDeg = ((h % 12) + m / 60) * 30;
+
+            setHand('secondHand', sDeg, 50, 14);
+            setHand('minuteHand', mDeg, 50, 16);
+            setHand('hourHand', hDeg, 50, 26);
+
+            requestAnimationFrame(updateClock);
+        }
+
+        function setHand(id, deg, cy, endY) {
+            const rad = (deg - 180) * Math.PI / 180;
+            const length = cy - endY;
+            const x2 = 50 + length * Math.sin(deg * Math.PI / 180);
+            const y2 = 50 - length * Math.cos(deg * Math.PI / 180);
+            const el = document.getElementById(id);
+            el.setAttribute('x2', x2);
+            el.setAttribute('y2', y2);
+        }
+
+        // ==================================
+        // UTILS
+        // ==================================
+        function escHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        // ==================================
+        // INIT
+        // ==================================
+        loadHistory();
+        updateClock();
+
+        // Auto-load meds if config exists
+        if (config.sheetId && config.apiKey) {
+            // Pre-load for when user navigates to config
+        }
+    </script>
+</body>
+</html>
