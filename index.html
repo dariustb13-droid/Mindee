@@ -167,11 +167,27 @@
 
         .recipient-card {
             background: var(--bg-card); border-radius: var(--radius-md);
-            border: 2px solid var(--border); padding: 1.2rem;
-            transition: var(--transition);
+            border: 2px solid var(--border); padding: 1.4rem;
+            transition: var(--transition); min-height: 180px;
         }
         .recipient-card.filled { border-color: var(--teal-light); background: linear-gradient(135deg, #fff 0%, var(--teal-ghost) 100%); }
         .recipient-card.filled .recipient-number { background: var(--teal-deep); color: #fff; }
+
+        .recipient-body { display: flex; gap: 14px; align-items: flex-start; }
+        .recipient-img-wrap {
+            width: 90px; height: 90px; border-radius: var(--radius-sm);
+            overflow: hidden; flex-shrink: 0; background: var(--teal-ghost);
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid var(--border);
+        }
+        .recipient-img-wrap img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .recipient-img-wrap .img-placeholder {
+            color: var(--teal-pale); display: flex; align-items: center; justify-content: center;
+        }
+        .recipient-img-wrap .img-placeholder svg { width: 36px; height: 36px; }
+        .recipient-details { flex: 1; min-width: 0; }
 
         .recipient-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
         .recipient-number {
@@ -267,6 +283,11 @@
         }
         .history-recipient.empty { background: #f5f5f5; color: var(--text-muted); font-style: italic; }
         .history-recipient strong { color: var(--teal-deep); }
+        .btn-delete-history {
+            background: none; border: none; cursor: pointer; color: var(--text-muted);
+            padding: 4px; border-radius: 4px; transition: var(--transition);
+        }
+        .btn-delete-history:hover { color: #c0392b; background: #fde8e8; }
         .moment-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.72rem; font-weight: 600; }
         .moment-badge.dimineata { background: #fef3c7; color: #92400e; }
         .moment-badge.pranz { background: #dbeafe; color: #1e40af; }
@@ -382,12 +403,18 @@
                             <option value="Dimineața">Dimineața</option>
                             <option value="Prânz">Prânz</option>
                             <option value="Seara">Seara</option>
+                            <option value="Dimineața și Seara">Dimineața și Seara</option>
+                            <option value="O dată pe zi">O dată pe zi</option>
                         </select>
                     </div>
                     <div class="form-group" style="margin-bottom:0;">
                         <label>Mod de administrare</label>
                         <input type="text" class="form-input" id="newAdmin" placeholder="ex: Oral, după masă">
                     </div>
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label>URL Imagine (opțional)</label>
+                    <input type="text" class="form-input" id="newImageUrl" placeholder="https://... (link direct la imagine)">
                 </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="addNewMedication()">
@@ -462,7 +489,7 @@
             </div>
             <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;line-height:1.5;">
                 📌 Sheet-ul trebuie să fie <strong>partajat public</strong> (vizibil cu linkul).<br>
-                📌 Structura: coloana A = Denumire Medicament, B = Momentul Zilei, C = Mod de administrare.
+                📌 Structura: A = Denumire Medicament, B = Momentul Zilei, C = Mod de administrare, D = URL Imagine.
             </p>
             <div class="btn-group" style="justify-content:flex-end;">
                 <button class="btn btn-secondary" onclick="closeSettings()">Anulează</button>
@@ -538,7 +565,7 @@
             statusEl.className = 'sheet-status loading';
             statusText.textContent = 'Se conectează la Google Sheets...';
             try {
-                const range = `${config.sheetName}!A1:C1000`;
+                const range = `${config.sheetName}!A1:D1000`;
                 const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(range)}?key=${config.apiKey}`;
                 const res = await fetch(url);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -555,7 +582,8 @@
                     id: i,
                     denumire: row[0] || '',
                     momentZilei: row[1] || '',
-                    modAdmin: row[2] || ''
+                    modAdmin: row[2] || '',
+                    imageUrl: row[3] || ''
                 })).filter(m => m.denumire);
                 statusEl.className = 'sheet-status connected';
                 statusText.textContent = `Conectat — ${medications.length} medicamente în catalog.`;
@@ -572,6 +600,7 @@
             grid.innerHTML = recipients.map((r, idx) => {
                 const med = r.medIndex !== null ? medications[r.medIndex] : null;
                 const isFilled = med !== null;
+                const hasImage = isFilled && med.imageUrl;
                 return `
                 <div class="recipient-card ${isFilled ? 'filled' : ''}">
                     <div class="recipient-header">
@@ -581,29 +610,39 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                         </button>
                     </div>
-                    <div class="recipient-field">
-                        <label>Selectează medicament</label>
-                        <select onchange="selectMed(${idx}, this.value)">
-                            <option value="">— Alege din catalog —</option>
-                            ${medications.map((m, mi) => {
-                                const taken = recipients.some((rr, ri) => ri !== idx && rr.medIndex === mi);
-                                const selected = r.medIndex === mi;
-                                return `<option value="${mi}" ${selected ? 'selected' : ''} ${taken && !selected ? 'disabled style="color:#ccc;"' : ''}>${esc(m.denumire)}${taken && !selected ? ' (atribuit)' : ''}</option>`;
-                            }).join('')}
-                        </select>
-                    </div>
-                    ${isFilled ? `
-                        <div class="recipient-info" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--sand)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                <span class="moment-badge ${getMomentClass(med.momentZilei)}">${esc(med.momentZilei)}</span>
-                            </div>
-                            <div style="display:flex;align-items:center;gap:6px;">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal-mid)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                                <span style="font-size:0.82rem;color:var(--text-secondary);">${esc(med.modAdmin)}</span>
-                            </div>
+                    <div class="recipient-body">
+                        <div class="recipient-img-wrap">
+                            ${hasImage
+                                ? `<img src="${esc(med.imageUrl)}" alt="${esc(med.denumire)}" onerror="this.parentElement.innerHTML='<div class=img-placeholder><svg viewBox=\\'0 0 24 24\\' fill=\\'none\\' stroke=\\'currentColor\\' stroke-width=\\'1.5\\'><rect x=\\'3\\' y=\\'3\\' width=\\'18\\' height=\\'18\\' rx=\\'2\\'/><circle cx=\\'8.5\\' cy=\\'8.5\\' r=\\'1.5\\'/><path d=\\'M21 15l-5-5L5 21\\'/></svg></div>'">`
+                                : `<div class="img-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`
+                            }
                         </div>
-                    ` : ''}
+                        <div class="recipient-details">
+                            <div class="recipient-field">
+                                <label>Selectează medicament</label>
+                                <select onchange="selectMed(${idx}, this.value)">
+                                    <option value="">— Alege din catalog —</option>
+                                    ${medications.map((m, mi) => {
+                                        const taken = recipients.some((rr, ri) => ri !== idx && rr.medIndex === mi);
+                                        const selected = r.medIndex === mi;
+                                        return `<option value="${mi}" ${selected ? 'selected' : ''} ${taken && !selected ? 'disabled style="color:#ccc;"' : ''}>${esc(m.denumire)}${taken && !selected ? ' (atribuit)' : ''}</option>`;
+                                    }).join('')}
+                                </select>
+                            </div>
+                            ${isFilled ? `
+                                <div class="recipient-info" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--sand)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                        <span class="moment-badge ${getMomentClass(med.momentZilei)}">${esc(med.momentZilei)}</span>
+                                    </div>
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--teal-mid)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0;"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                                        <span style="font-size:0.82rem;color:var(--text-secondary);">${esc(med.modAdmin)}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
                 </div>`;
             }).join('');
         }
@@ -643,7 +682,7 @@
                 recipients: recipients.map(r => {
                     if (r.medIndex === null) return { id: r.id, empty: true };
                     const med = medications[r.medIndex];
-                    return { id: r.id, empty: false, denumire: med.denumire, momentZilei: med.momentZilei, modAdmin: med.modAdmin };
+                    return { id: r.id, empty: false, denumire: med.denumire, momentZilei: med.momentZilei, modAdmin: med.modAdmin, imageUrl: med.imageUrl || '' };
                 })
             };
             history.push(entry);
@@ -663,19 +702,25 @@
             const entries = document.getElementById('historyEntries');
             if (!history.length) { empty.style.display = 'block'; entries.innerHTML = ''; return; }
             empty.style.display = 'none';
-            const sorted = [...history].sort((a, b) => b.dateObj - a.dateObj);
+            const sorted = history.map((e, i) => ({...e, _idx: i})).sort((a, b) => b.dateObj - a.dateObj);
             entries.innerHTML = sorted.map(entry => {
                 const filled = entry.recipients.filter(r => !r.empty).length;
                 return `
                 <div class="history-entry">
                     <div class="history-entry-header">
                         <span class="history-timestamp">📅 ${esc(entry.timestamp)}</span>
-                        <span class="history-badge">${filled}/4 recipiente</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span class="history-badge">${filled}/4 recipiente</span>
+                            <button class="btn-delete-history" onclick="confirmDeleteHistory(${entry._idx})" title="Șterge prescripția">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                        </div>
                     </div>
                     <div class="history-recipients">
                         ${entry.recipients.map(r => r.empty
                             ? `<div class="history-recipient empty">Recipient ${r.id} — gol</div>`
                             : `<div class="history-recipient">
+                                ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="" style="width:32px;height:32px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:6px;">` : ''}
                                 <strong>Recipient ${r.id}:</strong> ${esc(r.denumire)}<br>
                                 <span class="moment-badge ${getMomentClass(r.momentZilei)}">${esc(r.momentZilei)}</span>
                                 <span style="color:var(--text-secondary);font-size:0.78rem;margin-left:4px;">${esc(r.modAdmin)}</span>
@@ -686,20 +731,35 @@
             }).join('');
         }
 
+        function confirmDeleteHistory(idx) {
+            const entry = history[idx];
+            if (!entry) return;
+            const filled = entry.recipients.filter(r => !r.empty).map(r => r.denumire).join(', ');
+            const msg = `Sigur doriți să ștergeți prescripția din ${entry.timestamp}?\n\nMedicamente: ${filled || 'niciun medicament'}`;
+            if (confirm(msg)) {
+                history.splice(idx, 1);
+                localStorage.setItem('mindee_history', JSON.stringify(history));
+                showToast('Prescripție ștearsă din istoric.');
+                renderHistory();
+            }
+        }
+
         async function addNewMedication() {
             const name = document.getElementById('newName').value.trim();
             const moment = document.getElementById('newMoment').value;
             const admin = document.getElementById('newAdmin').value.trim();
+            const imageUrl = document.getElementById('newImageUrl').value.trim();
             if (!name) { showToast('Introduceți denumirea!', 'error'); return; }
             if (!config.sheetId || !config.apiKey) { showToast('Configurați Google Sheets din ⚙️', 'error'); return; }
             try {
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(config.sheetName)}!A:C:append?valueInputOption=USER_ENTERED&key=${config.apiKey}`;
-                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ values: [[name, moment, admin]] }) });
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${encodeURIComponent(config.sheetName)}!A:D:append?valueInputOption=USER_ENTERED&key=${config.apiKey}`;
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ values: [[name, moment, admin, imageUrl]] }) });
                 if (!res.ok) { const err = await res.json(); throw new Error(err.error?.message || `HTTP ${res.status}`); }
                 showToast(`"${name}" adăugat în catalog!`);
                 document.getElementById('newName').value = '';
                 document.getElementById('newMoment').value = '';
                 document.getElementById('newAdmin').value = '';
+                document.getElementById('newImageUrl').value = '';
                 loadMedications();
             } catch (err) { showToast(`Eroare: ${err.message}`, 'error'); }
         }
